@@ -17,7 +17,7 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Login to Vercel
-        uses: amondnet/vercel-action@v22
+        uses: amondnet/vercel-action@v41.1.4
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }} # create in Vercel dashboard
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
