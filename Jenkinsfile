@@ -1,40 +1,28 @@
 pipeline {
-  agent { label 'docker' }
-
-  options {
-    timestamps()
-  }
-
-  environment {
-    DOCKER_BUILDKIT = '0'
-  }
+  agent any
 
   stages {
-    stage('Build docker image') {
+    stage('Checkout') {
       steps {
-        wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'xterm']) {
-          sh '''#!/bin/bash
-            set -Eeuxo pipefail
-            docker version
-           docker build -t malak1782003/docker-reco -f Dockerfile .
-              -f Dockerfile .
-          '''
-        }
-        archiveArtifacts artifacts: 'build.log', allowEmptyArchive: true
+        git 'https://github.com/malak-y/react'
       }
     }
 
-    stage('RUN TESTS') {
+    stage('Build Docker image') {
       steps {
-        wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'xterm']) {
-          sh '''#!/bin/bash
-            set -Eeuxo pipefail
-            docker run --rm -e CI=true \
-              malak1782003/docker-reco \
-              bash -lc 'set -Eeuxo pipefail; npm --loglevel verbose run test -- --ci --watchAll=false'
-          '''
-        }
-        archiveArtifacts artifacts: 'test.log', allowEmptyArchive: true
+        sh '''
+          docker build -t react-app .
+        '''
+      }
+    }
+
+    stage('Run Container') {
+      steps {
+        sh '''
+          docker stop react-container || true
+          docker rm react-container || true
+          docker run -d -p 8080:80 --name react-container react-app
+        '''
       }
     }
   }
