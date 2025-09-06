@@ -15,14 +15,15 @@ pipeline {
       }
     }
 
-    stage('Run Container') {
-      steps {
-        sh '''
-          docker stop react-container || true
-          docker rm react-container || true
-          docker run -d -p 8080:80 --name react-container react-app
-        '''
-      }
-    }
+   stage('Run Container') {
+  steps {
+    sh '''
+      docker stop react-container || true
+      docker rm react-container || true
+      docker run -d -p 9090:80 --name react-container react-app
+    '''
+  }
+}
+
   }
 }
