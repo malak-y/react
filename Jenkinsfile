@@ -16,8 +16,7 @@ pipeline {
           sh '''#!/bin/bash
             set -Eeuxo pipefail
             docker version
-            docker build --progress=plain \
-              -t malak1782003/docker-reco \
+           docker build -t malak1782003/docker-reco -f Dockerfile .
               -f Dockerfile .
           '''
         }
