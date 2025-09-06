@@ -2,11 +2,11 @@ pipeline {
   agent { label 'docker' }
 
   options {
-    timestamps()   // add times to each log line
+    timestamps()
   }
 
   environment {
-    DOCKER_BUILDKIT = '1' // enable BuildKit
+    DOCKER_BUILDKIT = '1'
   }
 
   stages {
@@ -19,8 +19,9 @@ pipeline {
             docker build --progress=plain \
               -t malak1782003/docker-reco \
               -f Dockerfile .
-          ''' | tee build.log
+          '''
         }
+        archiveArtifacts artifacts: 'build.log', allowEmptyArchive: true
       }
     }
 
@@ -32,15 +33,10 @@ pipeline {
             docker run --rm -e CI=true \
               malak1782003/docker-reco \
               bash -lc 'set -Eeuxo pipefail; npm --loglevel verbose run test -- --ci --watchAll=false'
-          ''' | tee test.log
+          '''
         }
+        archiveArtifacts artifacts: 'test.log', allowEmptyArchive: true
       }
-    }
-  }
-
-  post {
-    always {
-      archiveArtifacts artifacts: '*.log', allowEmptyArchive: true
     }
   }
 }
