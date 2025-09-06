@@ -3,11 +3,10 @@ pipeline {
 
   stages {
     stage('Checkout') {
-      steps {
-        git 'https://github.com/malak-y/react'
-      }
-    }
-
+  steps {
+    git branch: 'main', url: 'https://github.com/malak-y/react'
+  }
+}
     stage('Build Docker image') {
       steps {
         sh '''
