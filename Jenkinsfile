@@ -13,13 +13,15 @@ pipeline {
     stage('Build docker image') {
       steps {
         wrap([$class: 'AnsiColorBuildWrapper', 'colorMapName': 'xterm']) {
-          sh '''
-            set -Eeuxo pipefail
-            docker version
-            docker build --progress=plain \
-              -t malak1782003/docker-reco \
-              -f Dockerfile .
-          '''
+         sh '''
+  #!/bin/bash
+  set -Eeuxo pipefail
+  docker version
+  docker build --progress=plain \
+    -t malak1782003/docker-reco \
+    -f Dockerfile .
+'''
+
         }
         archiveArtifacts artifacts: 'build.log', allowEmptyArchive: true
       }
