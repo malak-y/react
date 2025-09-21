@@ -31,8 +31,31 @@ jobs:
       - name: Build Project
         run: npm run build
 
+      # 6️⃣ Create deployment package with all necessary files
       - name: Create deployment package
-        run: zip -r deploy.zip package*.json build .ebextensions -x '*.git*' '.github*' 'node_modules*'
+        run: |
+          # Create a clean directory for deployment
+          mkdir deployment-package
+          
+          # Copy essential files for Docker build
+          cp Dockerfile deployment-package/
+          cp package*.json deployment-package/
+          cp nginx.conf deployment-package/ || echo "No nginx.conf found"
+          
+          # Copy source code (needed for Docker build)
+          cp -r src/ deployment-package/
+          cp -r public/ deployment-package/
+          
+          # Copy .ebextensions for Elastic Beanstalk configuration
+          cp -r .ebextensions/ deployment-package/ || echo "No .ebextensions directory found"
+          
+          # Copy Docker ignore file
+          cp .dockerignore deployment-package/ || echo "No .dockerignore found"
+          
+          # Create the zip file from the deployment package
+          cd deployment-package
+          zip -r ../deploy.zip . -x '*.git*'
+          cd ..
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v20
