@@ -31,20 +31,17 @@ jobs:
       - name: Build Project
         run: npm run build
 
-      # 6️⃣ Create deployment package
-      - name: Create deployment package
-        run: |
-          zip -r deploy.zip Dockerfile nginx.conf package*.json build .ebextensions \
-          -x '*.git*' '.github*' 'node_modules*'
 
-      # 7️⃣ Deploy to Elastic Beanstalk
+      - name: Create deployment package
+        run: zip -r deploy.zip Dockerfile nginx.conf .ebextensions -x '*.git*' 'node_modules*'
+
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v20
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: MyReactApp        # your EB app name
-          environment_name: MyReactApp-env    # your EB environment
-          region: eu-north-1                  # EB region
-          version_label: ${{ github.sha }}    # unique version
+          application_name: MyReactApp
+          environment_name: MyReactApp-env
+          region: eu-north-1
+          version_label: ${{ github.sha }}
           deployment_package: deploy.zip
