@@ -33,7 +33,7 @@ jobs:
 
       - name: Deploy to Elastic Beanstalk
         run: |
-          zip -r deploy.zip .  # create a zip of your project
+          zip -r deploy.zip . -x "*.git*" "node_modules/*"
           eb init MyReactApp --platform "Node.js 20" --region eu-north-1
           eb use MyReactApp-env
           eb deploy
