@@ -1,46 +1,69 @@
-name: Deploy to AWS Elastic Beanstalk
+name: CI/CD - React App
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  deploy:
+  build-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      # 1️⃣ Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
+      # 2️⃣ Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: '20' # your Node.js version
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: npm install
 
-      - name: Build project
+      # 4️⃣ Run tests
+      - name: Run Tests
+        run: npm test -- --coverage --passWithNoTests --watchAll=false
+
+      # 5️⃣ Build project
+      - name: Build Project
         run: npm run build
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-north-1
-
-      - name: Install EB CLI
+      # 6️⃣ Create deployment package with all necessary files
+      - name: Create deployment package
         run: |
-          pip install --upgrade --user awsebcli
-          export PATH=$PATH:~/.local/bin
-          eb --version
+          # Create a clean directory for deployment
+          mkdir deployment-package
+          
+          # Copy essential files for Docker build
+          cp Dockerfile deployment-package/
+          cp package*.json deployment-package/
+          cp nginx.conf deployment-package/ || echo "No nginx.conf found"
+          
+          # Copy source code (needed for Docker build)
+          cp -r src/ deployment-package/
+          cp -r public/ deployment-package/
+          
+          # Copy .ebextensions for Elastic Beanstalk configuration
+          cp -r .ebextensions/ deployment-package/ || echo "No .ebextensions directory found"
+          
+          # Copy Docker ignore file
+          cp .dockerignore deployment-package/ || echo "No .dockerignore found"
+          
+          # Create the zip file from the deployment package
+          cd deployment-package
+          zip -r ../deploy.zip . -x '*.git*'
+          cd ..
 
       - name: Deploy to Elastic Beanstalk
-        run: |
-          export PATH=$PATH:~/.local/bin
-          zip -r deploy.zip . -x "*.git*" "node_modules/*"
-          eb init MyReactApp --platform "Node.js 20" --region eu-north-1
-          eb use MyReactApp-env
-          eb deploy
+        uses: einaregilsson/beanstalk-deploy@v20
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: MyReactApp
+          environment_name: MyReactApp-env
+          region: eu-north-1
+          version_label: ${{ github.sha }}
+          deployment_package: deploy.zip
