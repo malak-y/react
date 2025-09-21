@@ -1,39 +1,50 @@
-name: Deploy to AWS Elastic Beanstalk
+name: CI/CD - React App
 
 on:
   push:
-    branches:
-      - main  # deploy when pushing to main branch
+    branches: [ main ]
 
 jobs:
-  deploy:
+  build-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      # 1️⃣ Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
+      # 2️⃣ Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20  # use your project's node version
+          node-version: '20' # your Node.js version
 
+      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: npm install
 
-      - name: Build project
-        run: npm run build  # adjust if your build command is different
+      # 4️⃣ Run tests
+      - name: Run Tests
+        run: npm test
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-north-1
+      # 5️⃣ Build project
+      - name: Build Project
+        run: npm run build
 
-      - name: Deploy to Elastic Beanstalk
+      # 6️⃣ Create deployment package
+      - name: Create deployment package
         run: |
-          zip -r deploy.zip . -x "*.git*" "node_modules/*"
-          eb init MyReactApp --platform "Node.js 20" --region eu-north-1
-          eb use MyReactApp-env
-          eb deploy
+          zip -r deploy.zip Dockerfile nginx.conf package*.json build .ebextensions \
+          -x '*.git*' '.github*' 'node_modules*'
+
+      # 7️⃣ Deploy to Elastic Beanstalk
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v20
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: MyReactApp        # your EB app name
+          environment_name: MyReactApp-env    # your EB environment
+          region: eu-north-1                  # EB region
+          version_label: ${{ github.sha }}    # unique version
+          deployment_package: deploy.zip
